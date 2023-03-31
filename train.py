@@ -50,7 +50,7 @@ class Trainer:
         self.model.train()
 
         for i, data in enumerate(self.train_loader):
-            img, pred, label = self.step(data)
+            wav, pred, label = self.step(data)
 
             # compute loss
             metrics = self.compute_metrics(pred, label, is_train=True)
@@ -67,10 +67,6 @@ class Trainer:
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
 
-            # only save img at first step
-            if i == len(self.train_loader) - 1:
-                self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, True), epoch)
-
             # monitor training progress
             if i % self.args.print_freq == 0:
                 print('Train: Epoch {} batch {} Loss {}'.format(epoch, i, loss))
@@ -78,24 +74,22 @@ class Trainer:
     def val_per_epoch(self, epoch):
         self.model.eval()
         for i, data in enumerate(self.val_loader):
-            img, pred, label = self.step(data)
+            wav, pred, label = self.step(data)
             metrics = self.compute_metrics(pred, label, is_train=False)
 
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
 
-            if i == len(self.val_loader) - 1:
-                self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, False), epoch)
 
     def step(self, data):
-        img, label = data
+        wav, label = data
         # warp input
-        img = Variable(img).cuda()
+        wav = Variable(wav).cuda()
         label = Variable(label).cuda()
 
         # compute output
-        pred = self.model(img)
-        return img, pred, label
+        pred = self.model(wav)
+        return wav, pred, label
 
     def compute_metrics(self, pred, gt, is_train):
         # you can call functions in metrics.py
@@ -105,15 +99,6 @@ class Trainer:
             prefix + 'l1': l1
         }
         return metrics
-
-    def gen_imgs_to_write(self, img, pred, label, is_train):
-        # override this method according to your visualization
-        prefix = 'train/' if is_train else 'val/'
-        return {
-            prefix + 'img': img[0],
-            prefix + 'pred': pred[0],
-            prefix + 'label': label[0]
-        }
 
     def compute_loss(self, pred, gt):
         if self.args.loss == 'l1':
