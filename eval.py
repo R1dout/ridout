@@ -23,7 +23,7 @@ class Evaluator:
 
     def eval(self):
         for i, data in enumerate(self.val_loader):
-            img, pred, label = self.step(data)
+            wav, pred, label = self.step(data)
             metrics = self.compute_metrics(pred, label)
 
             for key in metrics.keys():
@@ -58,14 +58,14 @@ class Evaluator:
         cv2.imwrite(viz_path, viz)
     
     def step(self, data):
-        img, label = data
+        wav, label = data
         # warp input
-        img = Variable(img).cuda()
+        wav = Variable(img).cuda()
         label = Variable(label).cuda()
 
         # compute output
-        pred = self.model(img)
-        return img, label, pred
+        pred = self.model(wav)
+        return wav, label, pred
 
 
 def eval_main():
