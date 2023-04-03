@@ -90,6 +90,12 @@ def prepare_test_args():
     return args
 
 
+def prepare_inf_args():
+    parser = argparse.ArgumentParser()
+    parser = parse_common_args(parser)
+    args = parser.parse_args()
+    return args
+
 if __name__ == '__main__':
     train_args = get_train_args()
     test_args = get_test_args()
