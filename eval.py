@@ -5,10 +5,8 @@ from model.model_entry import select_model
 from options import prepare_test_args
 from utils.logger import Recoder
 import numpy as np
-import cv2
 import os
 
-from utils.viz import label2rgb
 
 
 class Evaluator:
