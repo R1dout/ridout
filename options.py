@@ -18,7 +18,12 @@ def parse_common_args(parser):
 
 def parse_train_args(parser):
     parser = parse_common_args(parser)
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-3,
+                        help='Initial learning rate in LR cycle (default: 1e-3)')
+    parser.add_argument('--min_lr', type=float, default=5e-5,
+                        help='Minimum learning rate in LR cycle (default: 5e-5)')
+    parser.add_argument('--cycles', type=int, default=2,
+                        help='Number of LR cycles per epoch')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                         help='momentum for sgd, alpha parameter for adam')
     parser.add_argument('--beta', default=0.999, type=float, metavar='M',
@@ -28,7 +33,10 @@ def parse_train_args(parser):
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
     parser.add_argument('--train_list', type=str, default='/data/dataset1/list/base/train.txt')
     parser.add_argument('--batch_size', type=int, default=16)
-    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--patience',type=int,default=20,
+                        help='Patience for early stopping on validation set')
+    parser.add_argument('--loss_fuc',type=str,default='l1',
+                        help='l1:l1')
     return parser
 
 
