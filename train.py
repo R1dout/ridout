@@ -6,13 +6,15 @@ import torch.nn.functional as F
 import torch.optim
 import torch.utils.data
 from torch.autograd import Variable
+import numpy as np
+from tqdm import tqdm
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
 from options import prepare_train_args
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
-
+from utils.utils import set_cyclic_lr,get_lr
 
 class Trainer:
     def __init__(self):
@@ -36,49 +38,61 @@ class Trainer:
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.args.lr,
                                           betas=(self.args.momentum, self.args.beta),
                                           weight_decay=self.args.weight_decay)
+        self.state = {"step" : 0,
+             "worse_epochs" : 0,
+             "epoch" : 0,
+             "best_loss" : np.Inf}
 
     def train(self):
-        for epoch in range(self.args.epochs):
-            # train for one epoch
-            self.train_per_epoch(epoch)
-            self.val_per_epoch(epoch)
-            self.logger.save_curves(epoch)
-            self.logger.save_check_point(self.model, epoch)
-
-    def train_per_epoch(self, epoch):
-        # switch to train mode
+        print('epoch:{epoch:02d} step:{step:06d}.pth'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
+        avg_time = 0.
         self.model.train()
+        while self.state['worse_epochs'] < self.args.patience:
+            with tqdm(total=len(self.train_loader)) as pbar:
+                np.random.seed()
+                for i, data in enumerate(self.train_loader):
+                    t = time.time()
+                    wav, pred, label = self.step(data)
+                    set_cyclic_lr(self.optimizer, i, len(self.train_loader) , self.args.cycles, self.args.min_lr,
+                                  self.args.lr)
+                    self.logger.writer.add_scalar("lr", get_lr(self.optimizer), self.state["step"])
+                    metrics = self.compute_metrics(pred, label, is_train=True)
+                    loss = metrics['train/'+self.args.loss_fuc]
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+                    self.state["step"] += 1
+                    t = time.time() - t
+                    avg_time += (1. / float(i + 1)) * (t - avg_time)
+                    for key in metrics.keys():
+                        self.logger.record_scalar(key, metrics[key])
+                    pbar.update(1)
 
-        for i, data in enumerate(self.train_loader):
-            wav, pred, label = self.step(data)
+            self.model.eval()
+            total_loss=0
+            with tqdm(total=len(self.val_loader)) as pbar:
+                for i, data in enumerate(self.val_loader):
+                    wav, pred, label = self.step(data)
+                    metrics = self.compute_metrics(pred, label, is_train=False)
+                    loss = metrics['val/'+self.args.loss_fuc]
+                    total_loss += loss
+                    for key in metrics.keys():
+                        self.logger.record_scalar(key, metrics[key])
+                    pbar.update(1)
+                ave_loss = total_loss/(i+1)
+                print("VALIDATION FINISHED: LOSS: " + str(ave_loss))
+                if ave_loss >= self.state["best_loss"]:
+                    self.state["worse_epochs"] += 1
+                else:
+                    print("MODEL IMPROVED ON VALIDATION SET!")
+                    self.state["worse_epochs"] = 0
+                    self.state["best_loss"] = ave_loss
+                    self.state["best_checkpoint"] = '{epoch:02d}_{step:06d}.pth'.format(epoch=self.state['epoch'],step=self.state["step"])
 
-            # compute loss
-            metrics = self.compute_metrics(pred, label, is_train=True)
-
-            # get the item for backward
-            loss = metrics['train/l1']
-
-            # compute gradient and do Adam step
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
-            # logger record
-            for key in metrics.keys():
-                self.logger.record_scalar(key, metrics[key])
-
-            # monitor training progress
-            if i % self.args.print_freq == 0:
-                print('Train: Epoch {} batch {} Loss {}'.format(epoch, i, loss))
-
-    def val_per_epoch(self, epoch):
-        self.model.eval()
-        for i, data in enumerate(self.val_loader):
-            wav, pred, label = self.step(data)
-            metrics = self.compute_metrics(pred, label, is_train=False)
-
-            for key in metrics.keys():
-                self.logger.record_scalar(key, metrics[key])
+                self.state['epoch']+=1
+                self.logger.save_curves(self.state['epoch'])
+                self.logger.save_check_point(self.model, self.state['epoch'],self.state["step"])
+                np.save(self.args.model_dir+'/state.txt',self.state)
 
     def step(self, data):
         wav, label = data
