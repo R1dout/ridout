@@ -69,30 +69,31 @@ class Trainer:
                     pbar.update(1)
 
             self.model.eval()
-            total_loss=0
-            with tqdm(total=len(self.val_loader)) as pbar:
-                for i, data in enumerate(self.val_loader):
-                    wav, pred, label = self.step(data)
-                    metrics = self.compute_metrics(pred, label, is_train=False)
-                    loss = metrics['val/'+self.args.loss_fuc]
-                    total_loss += loss
-                    for key in metrics.keys():
-                        self.logger.record_scalar(key, metrics[key])
-                    pbar.update(1)
-                ave_loss = total_loss/(i+1)
-                print("VALIDATION FINISHED: LOSS: " + str(ave_loss))
-                if ave_loss >= self.state["best_loss"]:
-                    self.state["worse_epochs"] += 1
-                else:
-                    print("MODEL IMPROVED ON VALIDATION SET!")
-                    self.state["worse_epochs"] = 0
-                    self.state["best_loss"] = ave_loss
-                    self.state["best_checkpoint"] = '{epoch:02d}_{step:06d}.pth'.format(epoch=self.state['epoch'],step=self.state["step"])
+            with torch.no_grad():
+                total_loss=0
+                with tqdm(total=len(self.val_loader)) as pbar:
+                    for i, data in enumerate(self.val_loader):
+                        wav, pred, label = self.step(data)
+                        metrics = self.compute_metrics(pred, label, is_train=False)
+                        loss = metrics['val/'+self.args.loss_fuc]
+                        total_loss += loss
+                        for key in metrics.keys():
+                            self.logger.record_scalar(key, metrics[key])
+                        pbar.update(1)
+                    ave_loss = total_loss/(i+1)
+                    print("VALIDATION FINISHED: LOSS: " + str(ave_loss))
+                    if ave_loss >= self.state["best_loss"]:
+                        self.state["worse_epochs"] += 1
+                    else:
+                        print("MODEL IMPROVED ON VALIDATION SET!")
+                        self.state["worse_epochs"] = 0
+                        self.state["best_loss"] = ave_loss
+                        self.state["best_checkpoint"] = '{epoch:02d}_{step:06d}.pth'.format(epoch=self.state['epoch'],step=self.state["step"])
 
-                self.state['epoch']+=1
-                self.logger.save_curves(self.state['epoch'])
-                self.logger.save_check_point(self.model, self.state['epoch'],self.state["step"])
-                np.save(self.args.model_dir+'/state.txt',self.state)
+                    self.state['epoch']+=1
+                    self.logger.save_curves(self.state['epoch'])
+                    self.logger.save_check_point(self.model, self.state['epoch'],self.state["step"])
+                    np.save(self.args.model_dir+'/state.txt',self.state)
 
     def step(self, data):
         wav, label = data
