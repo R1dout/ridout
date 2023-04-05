@@ -80,7 +80,6 @@ class Trainer:
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
 
-
     def step(self, data):
         wav, label = data
         # warp input
@@ -99,15 +98,6 @@ class Trainer:
             prefix + 'l1': l1
         }
         return metrics
-
-    def compute_loss(self, pred, gt):
-        if self.args.loss == 'l1':
-            loss = (pred - gt).abs().mean()
-        elif self.args.loss == 'ce':
-            loss = torch.nn.functional.cross_entropy(pred, gt)
-        else:
-            loss = torch.nn.functional.mse_loss(pred, gt)
-        return loss
 
 
 def main():
