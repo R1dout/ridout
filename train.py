@@ -8,6 +8,7 @@ import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
 from tqdm import tqdm
+import pickle
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
@@ -93,7 +94,7 @@ class Trainer:
                     self.state['epoch']+=1
                     self.logger.save_curves(self.state['epoch'])
                     self.logger.save_check_point(self.model, self.state['epoch'],self.state["step"])
-                    np.save(self.args.model_dir+'/state.txt',self.state)
+                    self.save_state(self.args.model_dir,self.state)
 
     def step(self, data):
         wav, label = data
@@ -113,7 +114,10 @@ class Trainer:
             prefix + 'l1': l1
         }
         return metrics
-
+    
+    def save_state(self,model_dir,state):
+        with open(model_dir+'/state.txt','w') as file:
+            file.write(pickle.dumps(state))
 
 def main():
     trainer = Trainer()
