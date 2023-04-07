@@ -1,6 +1,9 @@
 import csv
 import time
-
+import os
+from options import prepare_train_args
+args = prepare_train_args()
+os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(x) for x in args.gpus)
 import torch
 import torch.nn.functional as F
 import torch.optim
@@ -12,7 +15,6 @@ import pickle
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
-from options import prepare_train_args
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
 from utils.utils import set_cyclic_lr,get_lr
