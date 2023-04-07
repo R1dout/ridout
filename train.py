@@ -21,7 +21,6 @@ from utils.utils import set_cyclic_lr,get_lr
 
 class Trainer:
     def __init__(self):
-        args = prepare_train_args()
         self.args = args
         torch.manual_seed(args.seed)
         self.logger = Logger(args)
@@ -37,7 +36,7 @@ class Trainer:
             else:
                 self.model.load_state_dict(torch.load(args.load_model_path).state_dict())
 
-        self.model = torch.nn.DataParallel(self.model)
+        self.model = torch.nn.DataParallel(self.model).cuda()
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.args.lr,
                                           betas=(self.args.momentum, self.args.beta),
                                           weight_decay=self.args.weight_decay)
