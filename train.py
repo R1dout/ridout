@@ -94,8 +94,8 @@ class Trainer:
 
                     self.state['epoch']+=1
                     self.logger.save_curves(self.state['epoch'])
-                    self.logger.save_check_point(self.model, self.state['epoch'],self.state["step"])
-                    self.save_state(self.args.model_dir,self.state，args.gpus)
+                    self.logger.save_check_point(self.model,self.state['epoch'],self.state["step"],self.args.gpus)
+                    self.save_state(self.args.model_dir,self.state)
 
     def step(self, data):
         wav, label = data
