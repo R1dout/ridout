@@ -44,9 +44,10 @@ class Logger:
         for name in names2imgs.keys():
             self.writer.add_image(name, self.tensor2img(names2imgs[name]), epoch)
 
-    def save_check_point(self, model, epoch, step=0):
+    def save_check_point(self, model, epoch, step, gpu_ids):
         model_name = '{epoch:02d}_{step:06d}.pth'.format(epoch=epoch, step=step)
         path = os.path.join(self.model_dir, model_name)
-        # don't save model, which depends on python path
-        # save model state dict
-        torch.save(model.state_dict(), path)
+        if len(gpu_ids) > 1:
+            torch.save(model.module.state_dict(), path)
+        else:
+            torch.save(model.state_dict(), path)
