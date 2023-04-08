@@ -30,7 +30,7 @@ class Trainer:
 
         self.model = select_model(args)
         if args.load_model_path != '':
-            print("=> using pre-trained weights for DPSNet")
+            print("=> using pre-trained weights")
             if args.load_not_strict:
                 load_match_dict(self.model, args.load_model_path)
             else:
@@ -46,7 +46,7 @@ class Trainer:
              "best_loss" : np.Inf}
 
     def train(self):
-        print('epoch:{epoch:02d} step:{step:06d}.pth'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
+        print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
         avg_time = 0.
         self.model.train()
         while self.state['worse_epochs'] < self.args.patience:
