@@ -46,10 +46,10 @@ class Trainer:
              "best_loss" : np.Inf}
 
     def train(self):
-        print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
         avg_time = 0.
         self.model.train()
         while self.state['worse_epochs'] < self.args.patience:
+            print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
             with tqdm(total=len(self.train_loader)) as pbar:
                 np.random.seed()
                 for i, data in enumerate(self.train_loader):
@@ -83,7 +83,7 @@ class Trainer:
                             self.logger.record_scalar(key, metrics[key])
                         pbar.update(1)
                     ave_loss = total_loss/(i+1)
-                    print("VALIDATION FINISHED: LOSS: " + str(ave_loss))
+                    print("VALIDATION FINISHED: LOSS: " + str(ave_loss.cpu().numpy()))
                     if ave_loss >= self.state["best_loss"]:
                         self.state["worse_epochs"] += 1
                     else:
