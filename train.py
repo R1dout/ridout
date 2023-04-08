@@ -117,8 +117,8 @@ class Trainer:
         return metrics
     
     def save_state(self,model_dir,state):
-        with open(model_dir+'/state.txt','w') as file:
-            file.write(pickle.dumps(state))
+        with open(model_dir + '/state.txt', 'wb') as file:
+            file.write(pickle.dumps(str(state)))
 
 def main():
     trainer = Trainer()
