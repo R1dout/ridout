@@ -98,22 +98,10 @@ class Trainer:
 
     def step(self, data):
         wav, label = data
-        # warp input
         wav = Variable(wav).cuda()
         label = Variable(label).cuda()
-
-        # compute output
         pred = self.model(wav)
         return wav, pred, label
-
-    def compute_metrics(self, pred, gt, is_train):
-        # you can call functions in metrics.py
-        l1 = (pred - gt).abs().mean()
-        prefix = 'train/' if is_train else 'val/'
-        metrics = {
-            prefix + 'l1': l1
-        }
-        return metrics
     
 
 def main():
