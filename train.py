@@ -68,7 +68,7 @@ class Trainer:
                     self.state["step"] += 1
                     t = time.time() - t
                     avg_time += (1. / float(i + 1)) * (t - avg_time)
-                    self.logger.record_scalar("train_loss", loss)
+                    self.logger.record_scalar("train_loss", loss.cpu().detach().numpy())
                     pbar.update(1)
 
             self.model.eval()
@@ -79,7 +79,7 @@ class Trainer:
                         wav, pred, label = self.step(data)
                         loss = loss_fuc(pred, label)
                         total_loss += loss
-                        self.logger.record_scalar("val_loss", loss)
+                        self.logger.record_scalar("val_loss", loss.cpu().detach().numpy())
                         pbar.update(1)
                     ave_loss = total_loss/(i+1)
                     print("VALIDATION FINISHED: LOSS: " + str(ave_loss.cpu().numpy()))
