@@ -15,6 +15,7 @@ import pickle
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
+from loss_fuc.loss_fuc_entry import select_loss_fuc
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
 from utils.utils import set_cyclic_lr,get_lr
@@ -29,6 +30,7 @@ class Trainer:
         self.val_loader = select_eval_loader(args)
 
         self.model = select_model(args)
+        
         if args.load_model_path != '':
             print("=> using pre-trained weights")
             if args.load_not_strict:
@@ -58,16 +60,15 @@ class Trainer:
                     set_cyclic_lr(self.optimizer, i, len(self.train_loader) , self.args.cycles, self.args.min_lr,
                                   self.args.lr)
                     self.logger.writer.add_scalar("lr", get_lr(self.optimizer), self.state["step"])
-                    metrics = self.compute_metrics(pred, label, is_train=True)
-                    loss = metrics['train/'+self.args.loss_fuc]
+                    loss_fuc = select_loss_fuc(args)
+                    loss = loss_fuc(pred, label)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
                     self.state["step"] += 1
                     t = time.time() - t
                     avg_time += (1. / float(i + 1)) * (t - avg_time)
-                    for key in metrics.keys():
-                        self.logger.record_scalar(key, metrics[key])
+                    self.logger.record_scalar("train_loss", loss)
                     pbar.update(1)
 
             self.model.eval()
@@ -76,11 +77,9 @@ class Trainer:
                 with tqdm(total=len(self.val_loader)) as pbar:
                     for i, data in enumerate(self.val_loader):
                         wav, pred, label = self.step(data)
-                        metrics = self.compute_metrics(pred, label, is_train=False)
-                        loss = metrics['val/'+self.args.loss_fuc]
+                        loss = loss_fuc(pred, label)
                         total_loss += loss
-                        for key in metrics.keys():
-                            self.logger.record_scalar(key, metrics[key])
+                        self.logger.record_scalar("val_loss", loss)
                         pbar.update(1)
                     ave_loss = total_loss/(i+1)
                     print("VALIDATION FINISHED: LOSS: " + str(ave_loss.cpu().numpy()))
