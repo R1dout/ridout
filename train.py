@@ -41,6 +41,7 @@ class Trainer:
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.args.lr,
                                           betas=(self.args.momentum, self.args.beta),
                                           weight_decay=self.args.weight_decay)
+        self.loss_fuc = select_loss_fuc(args)
         self.state = {"step" : 0,
              "worse_epochs" : 0,
              "epoch" : 1,
@@ -59,8 +60,7 @@ class Trainer:
                     set_cyclic_lr(self.optimizer, i, len(self.train_loader) , self.args.cycles, self.args.min_lr,
                                   self.args.lr)
                     self.logger.writer.add_scalar("lr", get_lr(self.optimizer), self.state["step"])
-                    loss_fuc = select_loss_fuc(args)
-                    loss = loss_fuc(pred, label)
+                    loss = self.loss_fuc(pred, label)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -76,7 +76,7 @@ class Trainer:
                 with tqdm(total=len(self.val_loader)) as pbar:
                     for i, data in enumerate(self.val_loader):
                         wav, pred, label = self.step(data)
-                        loss = loss_fuc(pred, label)
+                        loss = self.loss_fuc(pred, label)
                         total_loss += loss
                         self.logger.record_scalar("val_loss", loss.cpu().detach().numpy())
                         pbar.update(1)
