@@ -42,14 +42,14 @@ class Trainer:
                                           weight_decay=self.args.weight_decay)
         self.state = {"step" : 0,
              "worse_epochs" : 0,
-             "epoch" : 0,
+             "epoch" : 1,
              "best_loss" : np.Inf}
 
     def train(self):
         avg_time = 0.
         self.model.train()
         while self.state['worse_epochs'] < self.args.patience:
-            print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch']+1, step=self.state["step"]))
+            print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch'], step=self.state["step"]))
             with tqdm(total=len(self.train_loader)) as pbar:
                 np.random.seed()
                 for i, data in enumerate(self.train_loader):
@@ -92,10 +92,10 @@ class Trainer:
                         self.state["best_loss"] = ave_loss
                         self.state["best_checkpoint"] = '{epoch:02d}_{step:06d}.pth'.format(epoch=self.state['epoch'],step=self.state["step"])
 
-                    self.state['epoch']+=1
                     self.logger.save_curves(self.state['epoch'])
                     self.logger.save_check_point(self.model,self.state['epoch'],self.state["step"],self.args.gpus)
                     self.logger.save_state(self.args.model_dir,self.state)
+                    self.state['epoch']+=1
 
     def step(self, data):
         wav, label = data
