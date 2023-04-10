@@ -11,7 +11,6 @@ import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
 from tqdm import tqdm
-import pickle
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
