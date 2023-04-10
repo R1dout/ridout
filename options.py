@@ -9,8 +9,6 @@ def parse_common_args(parser):
     parser.add_argument('--load_model_path', type=str, default='checkpoints/base_model_pref/0.pth',
                         help='model path for pretrain or test')
     parser.add_argument('--load_not_strict', action='store_true', help='allow to load only common state dicts')
-    parser.add_argument('--val_list', type=str, default='/data/dataset1/list/base/val.txt',
-                        help='val list in train, test list path in test')
     parser.add_argument('--gpus', nargs='+', type=int)
     parser.add_argument('--seed', type=int, default=1234)
     return parser
@@ -31,7 +29,6 @@ def parse_train_args(parser):
     parser.add_argument('--weight-decay', '--wd', default=0, type=float,
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
-    parser.add_argument('--train_list', type=str, default='/data/dataset1/list/base/train.txt')
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--patience',type=int,default=20,
                         help='Patience for early stopping on validation set')
