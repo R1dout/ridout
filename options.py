@@ -16,6 +16,7 @@ def parse_common_args(parser):
 
 def parse_train_args(parser):
     parser = parse_common_args(parser)
+    parser.add_argument('--data_dir', type=str, default='/home/caiyonglong/MS-SNSD')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='Initial learning rate in LR cycle (default: 1e-3)')
     parser.add_argument('--min_lr', type=float, default=5e-5,
