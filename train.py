@@ -36,7 +36,7 @@ class Trainer:
             if args.load_not_strict:
                 load_match_dict(self.model, args.load_model_path)
             else:
-                self.model.load_state_dict(torch.load(args.load_model_path).state_dict())
+                self.model.load_state_dict(torch.load(args.load_model_path))
 
         self.model = torch.nn.DataParallel(self.model).cuda()
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.args.lr,
