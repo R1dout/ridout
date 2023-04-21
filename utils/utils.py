@@ -9,11 +9,23 @@ def get_lr(optim):
 def set_lr(optim, lr):
     for g in optim.param_groups:
         g['lr'] = lr
-
-def set_cyclic_lr(optimizer, it, epoch_it, cycles, min_lr, max_lr):
-    cycle_length = epoch_it // cycles
-    curr_cycle = min(it // cycle_length, cycles-1)
-    curr_it = it - cycle_length * curr_cycle
-
-    new_lr = min_lr + 0.5*(max_lr - min_lr)*(1 + np.cos((float(curr_it) / float(cycle_length)) * np.pi))
-    set_lr(optimizer, new_lr)
+    
+def set_triangular_lr(optimizer, it, epoch_it, args, worse_epochs):
+    cycle_length = epoch_it // args.cycles
+    cycle = np.floor(1 + it / (2 * cycle_length))
+    x = np.abs(it / cycle_length - 2 * cycle + 1)
+    if args.lr_mode == 'triangular1':
+        lr = args.min_lr + (args.max_lr - args.min_lr) * np.maximum(0, (1 - x))
+    if args.lr_mode == 'triangular2':
+        if (worse_epochs == 5 or worse_epochs == 10 or worse_epochs == 15) and it == 0:
+            args.max_lr = args.max_lr / 2
+        if args.max_lr < args.min_lr:
+            args.max_lr = args.min_lr
+        lr = args.min_lr + (args.max_lr - args.min_lr) * np.maximum(0, (1 - x))
+    if args.lr_mode == 'exp_range':
+        if (worse_epochs == 5 or worse_epochs == 10 or worse_epochs == 15) and it == 0:
+            args.max_lr = args.max_lr / 2
+        if args.max_lr < args.min_lr:
+            args.max_lr = args.min_lr
+        lr = args.min_lr + (args.max_lr - args.min_lr) * np.maximum(0, (1 - x))*args.lr_gamma**(it)
+    set_lr(optimizer, lr)
