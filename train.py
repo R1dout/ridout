@@ -17,7 +17,7 @@ from model.model_entry import select_model
 from loss_fuc.loss_fuc_entry import select_loss_fuc
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
-from utils.utils import set_cyclic_lr,get_lr
+from utils.utils import set_triangular_lr,get_lr
 
 class Trainer:
     def __init__(self):
@@ -57,8 +57,7 @@ class Trainer:
                 for i, data in enumerate(self.train_loader):
                     t = time.time()
                     wav, pred, label = self.step(data)
-                    set_cyclic_lr(self.optimizer, i, len(self.train_loader) , self.args.cycles, self.args.min_lr,
-                                  self.args.lr)
+                    set_triangular_lr(self.optimizer, i, len(self.train_loader), self.args, self.state["worse_epochs"])
                     self.logger.writer.add_scalar("lr", get_lr(self.optimizer), self.state["step"])
                     loss = self.loss_fuc(pred, label)
                     self.optimizer.zero_grad()
