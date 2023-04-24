@@ -49,8 +49,8 @@ class Trainer:
 
     def train(self):
         avg_time = 0.
-        self.model.train()
         while self.state['worse_epochs'] < self.args.patience:
+            self.model.train()
             print('epoch:{epoch:02d} step:{step:06d}'.format(epoch=self.state['epoch'], step=self.state["step"]))
             with tqdm(total=len(self.train_loader)) as pbar:
                 np.random.seed()
